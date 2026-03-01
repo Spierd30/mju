@@ -59,7 +59,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: 'MJU v__VERSION__'
+          releaseName: 'MJU ${{ github.ref_name }}'
           releaseBody: 'Download the installer for your OS from the assets below.'
           releaseDraft: true
           prerelease: false
