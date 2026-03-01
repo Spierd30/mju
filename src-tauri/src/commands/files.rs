@@ -1,6 +1,7 @@
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
 use tauri_plugin_dialog::DialogExt;
+use tokio::sync::oneshot;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct OpenFileResult {
@@ -9,12 +10,17 @@ pub struct OpenFileResult {
 }
 
 #[tauri::command]
-pub fn open_file(app: tauri::AppHandle) -> Result<OpenFileResult, String> {
-    let file = app
-        .dialog()
+pub async fn open_file(app: tauri::AppHandle) -> Result<OpenFileResult, String> {
+    let (tx, rx) = oneshot::channel();
+
+    app.dialog()
         .file()
         .add_filter("JSON Files", &["json"])
-        .blocking_pick_file();
+        .pick_file(move |path| {
+            let _ = tx.send(path);
+        });
+
+    let file = rx.await.map_err(|_| "Dialog closed unexpectedly".to_string())?;
 
     match file {
         Some(path) => {
@@ -32,11 +38,13 @@ pub fn open_file(app: tauri::AppHandle) -> Result<OpenFileResult, String> {
 }
 
 #[tauri::command]
-pub fn save_file(
+pub async fn save_file(
     app: tauri::AppHandle,
     content: String,
     suggested_path: Option<String>,
 ) -> Result<String, String> {
+    let (tx, rx) = oneshot::channel();
+
     let mut dialog = app.dialog().file().add_filter("JSON Files", &["json"]);
 
     if let Some(ref suggested) = suggested_path {
@@ -45,7 +53,11 @@ pub fn save_file(
         }
     }
 
-    let path = dialog.blocking_save_file();
+    dialog.save_file(move |path| {
+        let _ = tx.send(path);
+    });
+
+    let path = rx.await.map_err(|_| "Dialog closed unexpectedly".to_string())?;
 
     match path {
         Some(p) => {
