@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Code2, Save, Copy, Check, AlignLeft, GitBranch, Clock, Search } from 'lucide-react';
 import { useStore } from '../store';
 import { saveFile } from '../lib/tauri';
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
+import { getVersion } from '@tauri-apps/api/app';
 
 export function Toolbar() {
   const {
@@ -18,6 +19,11 @@ export function Toolbar() {
   } = useStore();
 
   const [copyDone, setCopyDone] = useState(false);
+  const [version, setVersion] = useState('');
+
+  useEffect(() => {
+    getVersion().then(setVersion);
+  }, []);
 
   async function handleFormat() {
     if (!parsedJson) return;
@@ -50,6 +56,7 @@ export function Toolbar() {
       <div className="flex items-center gap-1.5 mr-3">
         <Code2 size={18} className="text-sky-500" />
         <span className="font-bold text-slate-100 tracking-tight">MJU</span>
+        {version && <span className="text-xs text-slate-500">v{version}</span>}
       </div>
 
       {/* Format */}
