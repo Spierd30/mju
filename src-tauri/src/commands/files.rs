@@ -1,6 +1,6 @@
 use crate::error::AppError;
 use serde::{Deserialize, Serialize};
-use tauri_plugin_dialog::DialogExt;
+use tauri_plugin_dialog::{DialogExt, FilePath};
 use tokio::sync::oneshot;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -11,7 +11,7 @@ pub struct OpenFileResult {
 
 #[tauri::command]
 pub async fn open_file(app: tauri::AppHandle) -> Result<OpenFileResult, String> {
-    let (tx, rx) = oneshot::channel();
+    let (tx, rx) = oneshot::channel::<Option<FilePath>>();
 
     app.dialog()
         .file()
@@ -43,7 +43,7 @@ pub async fn save_file(
     content: String,
     suggested_path: Option<String>,
 ) -> Result<String, String> {
-    let (tx, rx) = oneshot::channel();
+    let (tx, rx) = oneshot::channel::<Option<FilePath>>();
 
     let mut dialog = app.dialog().file().add_filter("JSON Files", &["json"]);
 
